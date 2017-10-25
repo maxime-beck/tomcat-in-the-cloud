@@ -24,9 +24,9 @@ import org.apache.catalina.tribes.MembershipService;
 import org.apache.catalina.tribes.group.GroupChannel;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.util.providers.member.KubernetesMemberProvider;
+import org.apache.tomcat.util.providers.member.MemberProvider;
 import org.example.tomcat.cloud.membership.DynamicMembershipService;
-import org.example.tomcat.cloud.membership.KubernetesMemberProvider;
-import org.example.tomcat.cloud.membership.MemberProvider;
 
 import java.io.File;
 import java.io.IOException;

@@ -16,11 +16,18 @@
 
 package org.example.tomcat.cloud.membership;
 
-import org.apache.catalina.tribes.*;
+import org.apache.catalina.tribes.Member;
+import org.apache.catalina.tribes.Channel;
+import org.apache.catalina.tribes.ChannelMessage;
+import org.apache.catalina.tribes.ChannelException;
+import org.apache.catalina.tribes.MembershipListener;
+import org.apache.catalina.tribes.MembershipService;
+import org.apache.catalina.tribes.MessageListener;
 import org.apache.catalina.tribes.membership.Membership;
 import org.apache.catalina.tribes.membership.StaticMember;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.util.providers.member.MemberProvider;
 
 import java.io.IOException;
 import java.net.InetAddress;
