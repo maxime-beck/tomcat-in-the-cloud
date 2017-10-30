@@ -54,6 +54,7 @@ public class Main {
 
         Tomcat tomcat = new Tomcat();
         tomcat.setPort(8080); // HTTP port for Tomcat; make sure to set the same value in pom.xml
+        tomcat.getConnector();
 
         // Servlet Configuration:
         File base = new File(System.getProperty("java.io.tmpdir"));
