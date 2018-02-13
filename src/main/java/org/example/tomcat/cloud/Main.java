@@ -53,31 +53,38 @@ public class Main {
 
         // Embedded Tomcat Configuration:
 
-        Tomcat tomcat = new Tomcat();
-        tomcat.setPort(8080); // HTTP port for Tomcat; make sure to set the same value in pom.xml
-        tomcat.getConnector();
+        try {
+            Tomcat tomcat = new Tomcat();
+            tomcat.setPort(8080); // HTTP port for Tomcat; make sure to set the same value in pom.xml
+            tomcat.getConnector();
 
-        // Servlet Configuration:
-        File base = new File(System.getProperty("java.io.tmpdir"));
-        Context ctx = tomcat.addContext("", base.getAbsolutePath());
-        Tomcat.addServlet(ctx, "TestServlet", new TestServlet());
-        ctx.addServletMappingDecoded("/", "TestServlet");
+            // Servlet Configuration:
+            File base = new File(System.getProperty("java.io.tmpdir"));
 
-        // Cluster configuration
-        SimpleTcpCluster cluster = new SimpleTcpCluster();
-        tomcat.getEngine().setCluster(cluster);
+            if(args[0].equals("--war") && args.length > 1) {
+                System.out.println("im in !");
+                File war = new File(args[1]);
+                Context ctx = tomcat.addWebapp("/", war.getAbsolutePath());
+                ctx.setDistributable(true);
+            }
 
-        ctx.setDistributable(true);
+            // Cluster configuration
+            SimpleTcpCluster cluster = new SimpleTcpCluster();
+            tomcat.getEngine().setCluster(cluster);
 
-        GroupChannel channel = (GroupChannel) cluster.getChannel();
+            GroupChannel channel = (GroupChannel) cluster.getChannel();
 
-        // The interesting part: use DynamicMembershipService (with KubernetesMemberProvider)
-        MemberProvider provider = new KubernetesMemberProvider();
-        MembershipService service = new DynamicMembershipService(provider);
-        channel.setMembershipService(service);
+            // The interesting part: use DynamicMembershipService (with KubernetesMemberProvider)
+            MemberProvider provider = new KubernetesMemberProvider();
+            MembershipService service = new DynamicMembershipService(provider);
+            channel.setMembershipService(service);
 
-        // Start Tomcat
-        tomcat.start();
-        tomcat.getServer().await();
+            // Start Tomcat
+            tomcat.start();
+            tomcat.getServer().await();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
