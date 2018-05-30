@@ -135,6 +135,12 @@ public class DynamicMembershipService implements MembershipService, MembershipLi
             return;
         }
 
+        // Display current list of memembers
+        for (Member member : members) {
+            log.info(member);
+        }
+        log.info("===");
+
         // Add new members & refresh lastHeardFrom timestamp for already known members
         for (Member member : members) {
             if (membership.memberAlive(member)) {

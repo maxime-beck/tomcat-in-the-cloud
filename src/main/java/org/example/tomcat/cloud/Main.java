@@ -62,9 +62,8 @@ public class Main {
             File base = new File(System.getProperty("java.io.tmpdir"));
 
             if(args[0].equals("--war") && args.length > 1) {
-                System.out.println("im in !");
                 File war = new File(args[1]);
-                Context ctx = tomcat.addWebapp("/", war.getAbsolutePath());
+                Context ctx = tomcat.addWebapp("", war.getAbsolutePath());
                 ctx.setDistributable(true);
             }
 
