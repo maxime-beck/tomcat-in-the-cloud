@@ -14,6 +14,7 @@
         <mainClass>org.example.tomcat.cloud.Main</mainClass>
         <tomcat.version>9.0.1</tomcat.version>
         <fabric8.version>3.3.4</fabric8.version>
+        <json.version>20170516</json.version>
 
         <!-- OpenShift service customization -->
         <port>8080</port>
@@ -58,6 +59,11 @@
             <groupId>org.apache.tomcat</groupId>
             <artifactId>tomcat-servlet-api</artifactId>
             <version>${tomcat.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json.version}</version>
         </dependency>
     </dependencies>
 
