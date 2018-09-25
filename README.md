@@ -1,95 +1,79 @@
-# Tomcat Session Replication in OpenShift
+# Tomcat Clustering in OpenShift
 
-This project was realized for the *R&D Workshop* at the University of Neuchâtel
-during the spring semester 2017.
+Tomcat-in-the-cloud is the current name of the project that seeks to port Tomcat clustering into cloud services such as Kubernetes and OpenShift.
 
-The goal was to research ways to extend Tomcat's session replication mechanism
-to cloud deployments such as OpenShift and implement a proof of concept. Our
-implementation can be found in this repository.
+## Try it out with Minishift
+### Requirements
+* [Docker](https://docs.docker.com/v17.12/install/)
+* [Kubernetes CLI](https://kubernetes.io/docs/tasks/tools/install-kubectl/) (to orchestrate from the command line)
 
-A simple application (`TestServlet.java`) was also created. It responds to
-requests with a JSON object containing the IP and hostname of the responding
-node, as well as a counter that is incremented on each request, allowing to
-verify if session data is correctly replicated.
+### Setting up the environment
 
+Minishift is a light-weight OpenShift platform that is easy to install and quickly up and running. This platform is perfect for testing out new features like Tomcat-in-the-Cloud. To download and install Minishift, refer to the [official documentation](https://docs.okd.io/latest/minishift/getting-started/installing.html).
 
-## Usage
+Once Minishift is installed, proceed with the following instructions :
 
-### Prepare OpenShift
-
-Create a new OpenShift project or switch to an existing one:
-
+1. Start Minishift
 ```sh
-oc project tomcat-in-the-cloud
+$ minishift start
 ```
 
-Authorize pods to see their peers:
-
+2. Set up the docker environment
 ```sh
-oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -n $(oc project -q)
+$ eval $(minishift docker-env)
 ```
 
-### Deploy your application
-
-```sh 
-mvn fabric8:deploy
+3. Login with a user/password of your choice. We'll use admin/password
+```sh
+$ oc login -u admin -p password
 ```
 
-## Customization
+4. Create a new project. Again, we will call it tomcat-in-the-cloud but feel free to use the one you'd like
+```sh
+$ oc new-project tomcat-in-the-cloud
+```
 
-### Project name
+5. Using Docker, log into the running Openshift docker registry
+```sh
+$ docker login -u $(oc whoami) -p $(oc whoami -t) $(minishift openshift registry)
+```
 
-By default, the application is deployed to the project `tomcat-in-the-cloud`.
-To change this, modify the value of `fabric8.namespace` in `pom.xml`.
+6. If not already done, clone the repository and change directory to get to its root
+```sh
+$ git clone https://github.com/web-servers/tomcat-in-the-cloud.git
+$ cd tomcat-in-the-cloud
+```
 
-### Server port
+7. Build the docker image providing the war file of the application you would like to deploy (relative path). You also have to specify the registry_id which is the name of your Openshift project
+```sh
+$ docker build --build-arg war=[war_file] --build-arg registry_id=$(oc project -q) . -t $(minishift openshift registry)/$(oc project -q)/image
+```
+The name of the project can be retreived using ```$(oc project -q)```.
 
-Tomcat is set to listen to port 8080, and fabric8 must expose this port in the
-resulting containers.  This value is specified in two places: in the
-application itself (see `Main.java`), and in fabric8's configuration (variable
-`port` in `pom.xml`)
+8. Push the resulting docker image onto the docker registry
+```sh
+$ docker push $(minishift openshift registry)/$(oc project -q)/image
+```
 
-### Number of replicas
+### Deploying in the cloud
+Once built and pushed on the docker registry, we need to run and expose the docker image.
 
-Upon deployment, the application is automatically scaled to 2 pods. This value
-can be changed in `src/main/fabric8/deployment.yml`. When the default behavior
-is desired, this file can safely be deleted.
+1. Allow Openshift pods to see their peers (a must for session replication to work)
+```sh
+$ oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -n $(oc project -q)
+```
 
-### Sticky sessions
+2. Run the docker image into one container
+```sh
+$ kubectl run $(oc project -q) --image=$(minishift openshift registry)/$(oc project -q)/image:latest --port 8080
+```
 
-To make testing easier, sticky sessions have been disabled in
-`src/main/fabric8/route.yml`.  To re-enable them, change
-`haproxy.router.openshift.io/disable_cookies` to `true` or simply delete the
-file.
+3. Expose the deployment on port 80 for it to be accessible
+```sh
+$ kubectl expose deployment $(oc project -q) --type=LoadBalancer --port 80 --target-port 8080
+```
 
-When making changes to the route configuration, run `mvn fabric8:undeploy`
-before deploying again to make sure that all changes are taken into account.
-
-## Limitations and possible improvements
-
-- Error handling is at a bare minimum and should be improved.
-- `CertificateStreamProvider` (see
-  [JGroups-Kubernetes](https://github.com/jgroups-extras/jgroups-kubernetes/blob/master/src/main/java/org/jgroups/protocols/kubernetes/stream/CertificateStreamProvider.java))
-  isn't currently provided, as it wasn't needed in our test deployments and we
-  wanted to avoid the additional `net.oauth` dependency.
-- Although the class is named `KubernetesMemberProvider`, it might not work in
-  non-OpenShift Kubernetes, since the environment variables used to set up API
-  calls might be different.
-- The environment variable name prefix `OPENSHIFT_KUBE_PING_` was taken as-is
-  from
-  [JGroups-Kubernetes](https://github.com/jgroups-extras/jgroups-kubernetes/)
-  and should probably be changed to something more meaningful. It seems that
-  these variables are meant to be set manually only to override those provided
-  by Kubernetes.
-- Multiple applications deployed to the same namespace/project will form a
-  single cluster and share session data together, which adds some overhead (due
-  to more data being shared) and can pose security risks.  A solution to this
-  could be possible with *labels*: `KubernetesMemberProvider` already filters
-  pods by label if the environment variable `OPENSHIFT_KUBE_PING_LABELS` is set
-  (can be set in `pom.xml`, similarly to `OPENSHIFT_KUBE_PING_NAMESPACE`), and
-  labels can be added to your deployment (see [fabric8-maven-plugin
-  documentation](https://maven.fabric8.io/#resource-labels-annotations)).
-
+Your clustered application should now be up and running, you can connect to Openshift GUI using ```$ minishift console```. When done simply log in and manage your application!
 
 ## Credits
 
