@@ -71,7 +71,7 @@ public class DynamicMembershipService implements MembershipService, MembershipLi
 
     @Override
     public void start() throws Exception {
-        log.info("START");
+        //log.info("START");
         start(MembershipService.MBR_RX);
     }
 
@@ -82,7 +82,7 @@ public class DynamicMembershipService implements MembershipService, MembershipLi
 
         // TODO: check that all required properties are set
 
-        log.info("start(" + level + ")");
+        //log.info("start(" + level + ")");
 
         if (membership == null)
             membership = new Membership(localMember);
@@ -106,7 +106,7 @@ public class DynamicMembershipService implements MembershipService, MembershipLi
 
     @Override
     public void stop(int level) {
-        log.info("stop(" + level + ")");
+        //log.info("stop(" + level + ")");
         if ((level & MembershipService.MBR_RX) == 0)
             return;
 
@@ -139,7 +139,7 @@ public class DynamicMembershipService implements MembershipService, MembershipLi
         for (Member member : members) {
             log.info(member);
         }
-        log.info("===");
+        //log.info("===");
 
         // Add new members & refresh lastHeardFrom timestamp for already known members
         for (Member member : members) {
